@@ -1,258 +1,682 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Steganography وطرق كشفها</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>إخفاء المعلومات وكشفها</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <style>
-:root{--b1:#27406b;--b2:#3b5f8c;--ac:#8fe3ff;--tx:#f6f9ff;--mu:#cfdcf0;--cd:rgba(255,255,255,.13);--ln:rgba(255,255,255,.25);--wn:#ffd98a;box-sizing:border-box}
+/* Layout: full-screen 16:9 slide deck, fixed left rail for progress + section, content centered in a wide canvas */
+:root{
+  --bg0:#0b1a33; --bg1:#132a4d; --bg2:#1c3a64;
+  --surface:rgba(255,255,255,.06); --surface2:rgba(255,255,255,.10);
+  --line:rgba(140,190,255,.22); --line2:rgba(140,190,255,.40);
+  --fg:#eef4ff; --mut:#a9c0e0; --dim:#7f98bd;
+  --ac:#5ad1ff; --ac2:#8f7bff; --gold:#ffcf6b; --good:#54e6a8; --warn:#ff9b7a;
+  --card:rgba(255,255,255,.05);
+  --disp:"Tajawal","Segoe UI",Tahoma,sans-serif;
+  --body:"Tajawal","Segoe UI",Tahoma,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme: dark;
+}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{background:linear-gradient(135deg,var(--b1),var(--b2));color:var(--tx);font-family:Tajawal,"Segoe UI",Tahoma,sans-serif;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
-.mono,code{font-family:ui-monospace,Menlo,Consolas,monospace;direction:ltr;unicode-bidi:embed}
-.en{direction:ltr;unicode-bidi:embed;color:var(--ac);font-weight:700}
-.s{position:absolute;inset:0;bottom:64px;top:env(safe-area-inset-top,0px);padding:22px 6vw 14px;display:none;flex-direction:column;justify-content:center;gap:14px;overflow:auto}
-.s.on{display:flex;animation:f .45s ease}
-@keyframes f{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
-h1{font-size:clamp(26px,5vw,48px);margin:0;line-height:1.35}
-h2{font-size:clamp(22px,3.4vw,34px);margin:0;color:var(--ac)}
-p,li{font-size:clamp(15px,2vw,21px);line-height:1.7;margin:0}
-ul{margin:0;padding-inline-start:22px;display:flex;flex-direction:column;gap:6px}
-.card{background:var(--cd);border:1px solid var(--ln);border-radius:14px;padding:14px 18px}
-.row{display:flex;gap:14px;flex-wrap:wrap;align-items:stretch}
-.row>*{flex:1 1 260px}
-.tag{display:inline-block;background:var(--wn);color:#33280a;border-radius:8px;padding:3px 10px;font-size:14px;font-weight:700}
-table{width:100%;border-collapse:collapse;font-size:clamp(13px,1.7vw,18px)}
-th,td{border:1px solid var(--ln);padding:8px 10px;text-align:start;vertical-align:top}
-th{background:rgba(143,227,255,.2);color:var(--ac)}
+body{
+  background:
+    radial-gradient(1200px 800px at 85% -10%,rgba(90,209,255,.16),transparent 60%),
+    radial-gradient(1000px 700px at 5% 110%,rgba(143,123,255,.18),transparent 60%),
+    linear-gradient(135deg,var(--bg0),var(--bg1) 55%,var(--bg2));
+  color:var(--fg);font-family:var(--body);overflow:hidden;
+}
+.mono,code{font-family:var(--mono);direction:ltr;unicode-bidi:embed}
+.en{direction:ltr;unicode-bidi:embed;color:var(--ac);font-weight:700;letter-spacing:.2px}
 svg{max-width:100%;height:auto}
-.bit{display:inline-block;width:34px;height:42px;line-height:42px;text-align:center;border:1px solid var(--ln);border-radius:8px;margin:2px;background:var(--cd);font-size:20px}
-.bit.ch{background:var(--wn);color:#33280a;font-weight:800}
-button{font-family:inherit;cursor:pointer;border:1px solid var(--ln);background:var(--cd);color:var(--tx);border-radius:10px;padding:8px 14px;font-size:16px}
-button.act{background:var(--ac);color:#10304a;font-weight:700}
-#bar{position:fixed;bottom:0;left:0;right:0;height:64px;padding:0 12px env(safe-area-inset-bottom,0px);display:flex;align-items:center;gap:8px;background:rgba(24,42,72,.92);border-top:1px solid var(--ln);z-index:5}
-#bar .sp{flex:1;text-align:center;font-size:15px;color:var(--mu)}
-#prog{position:fixed;top:env(safe-area-inset-top,0px);left:0;height:4px;background:var(--ac);width:0;z-index:6;transition:width .3s}
-#notes{position:fixed;left:10px;right:10px;bottom:72px;max-height:38vh;overflow:auto;background:rgba(20,36,64,.97);border:1px solid var(--ac);border-radius:14px;padding:14px 18px;z-index:7;display:none;font-size:17px;line-height:1.8}
+
+/* fixed decorative canvas */
+#bgc{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;opacity:.4;z-index:0}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+   linear-gradient(rgba(140,190,255,.045) 1px,transparent 1px) 0 0/46px 46px,
+   linear-gradient(90deg,rgba(140,190,255,.045) 1px,transparent 1px) 0 0/46px 46px;
+  mask:radial-gradient(130% 120% at 50% 40%,#000 55%,transparent 100%)}
+
+/* deck */
+#deck{position:fixed;inset:0;z-index:1}
+.s{position:absolute;inset:0;bottom:72px;
+  top:env(safe-area-inset-top,0px);
+  padding:clamp(20px,3vw,46px) max(28px,env(safe-area-inset-left,0px)) clamp(14px,2vw,26px) max(28px,env(safe-area-inset-right,0px));
+  display:none;flex-direction:column;justify-content:center;gap:clamp(12px,1.6vw,22px);overflow:auto}
+.s.on{display:flex;animation:in .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes in{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+.wrap{width:100%;max-width:1180px;margin-inline:auto;display:flex;flex-direction:column;gap:inherit}
+
+/* eyebrow + heads */
+.ey{display:inline-flex;align-items:center;gap:10px;font-size:clamp(12px,1.1vw,15px);
+  color:var(--ac);font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.ey .n{font-family:var(--mono);background:var(--surface2);border:1px solid var(--line);
+  border-radius:8px;padding:2px 9px;color:var(--gold);font-size:.85em}
+h1{font-family:var(--disp);font-size:clamp(30px,5vw,62px);line-height:1.28;margin:0;
+  font-weight:800;text-wrap:balance;letter-spacing:-.5px}
+h2{font-family:var(--disp);font-size:clamp(24px,3.3vw,44px);line-height:1.3;margin:0;
+  font-weight:800;text-wrap:balance;
+  background:linear-gradient(90deg,var(--fg),var(--ac));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:clamp(16px,1.7vw,24px);color:var(--mut);font-weight:700}
+p,li{font-size:clamp(14px,1.35vw,20px);line-height:1.7;margin:0;color:var(--fg)}
+.lead{font-size:clamp(16px,1.6vw,23px);color:var(--mut);max-width:70ch}
+b,strong{color:#fff}
+
+/* cards + grid */
+.row{display:flex;gap:clamp(12px,1.4vw,20px);flex-wrap:wrap;align-items:stretch}
+.row>*{flex:1 1 260px;min-width:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,1.4vw,20px)}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.4vw,20px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:clamp(14px,1.5vw,22px);min-width:0;position:relative;overflow:hidden}
+.card.ac{border-color:var(--line2);box-shadow:0 0 0 1px rgba(90,209,255,.12) inset,0 14px 40px rgba(0,0,0,.25)}
+.card.gold{border-color:rgba(255,207,107,.5)}
+.card h3,.card b.t{display:block;font-family:var(--disp);font-weight:800;font-size:clamp(16px,1.5vw,21px);
+  margin:0 0 8px;color:#fff}
+.card .ic{position:absolute;inset-inline-start:auto;inset-inline-end:14px;top:14px;opacity:.9}
+ul{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:7px}
+ul.clean{list-style:none;padding:0}
+ul.clean li{position:relative;padding-inline-start:24px}
+ul.clean li::before{content:"";position:absolute;inset-inline-start:0;top:.62em;width:9px;height:9px;border-radius:3px;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));transform:rotate(45deg)}
+
+.tag{display:inline-flex;align-items:center;gap:7px;background:rgba(255,207,107,.14);
+  color:var(--gold);border:1px solid rgba(255,207,107,.4);border-radius:999px;
+  padding:5px 14px;font-size:clamp(12px,1.1vw,15px);font-weight:700;width:fit-content}
+.pill{display:inline-flex;gap:6px;align-items:center;background:var(--surface2);border:1px solid var(--line);
+  border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;color:var(--mut)}
+
+/* table */
+.tbl{width:100%;overflow-x:auto;border-radius:14px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:clamp(13px,1.25vw,18px);min-width:540px}
+th,td{padding:clamp(9px,1vw,15px) clamp(11px,1.1vw,17px);text-align:start;vertical-align:top;
+  border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{background:linear-gradient(180deg,rgba(90,209,255,.16),rgba(90,209,255,.07));color:var(--ac);
+  font-family:var(--disp);font-weight:800;font-size:.95em}
+td:first-child,th:first-child{font-weight:700}
+tbody tr:hover td{background:rgba(255,255,255,.03)}
+
+/* bit boxes */
+.bits{display:flex;gap:6px;flex-wrap:wrap;direction:ltr}
+.bit{width:clamp(30px,3vw,46px);height:clamp(38px,3.6vw,56px);display:grid;place-items:center;
+  border:1px solid var(--line);border-radius:10px;background:var(--surface);
+  font-family:var(--mono);font-size:clamp(17px,1.9vw,26px);font-weight:700;transition:.25s}
+.bit.ch{background:linear-gradient(135deg,var(--gold),#ffb347);color:#2a1e03;border-color:transparent;
+  box-shadow:0 6px 18px rgba(255,180,70,.35);transform:translateY(-3px)}
+button{font-family:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);
+  color:var(--fg);border-radius:12px;padding:9px 18px;font-size:15px;font-weight:700;transition:.2s}
+button:hover{border-color:var(--line2);background:var(--surface2)}
+button.act{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#06131f;border-color:transparent;
+  box-shadow:0 6px 20px rgba(90,209,255,.3)}
+button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+
+/* compare slider */
+.cmp{position:relative;width:100%;max-width:560px;aspect-ratio:16/9;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line2);box-shadow:0 14px 44px rgba(0,0,0,.35)}
+.cmp canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
+.cmp .lab{position:absolute;top:10px;padding:3px 11px;border-radius:999px;font-size:12px;font-weight:800;
+  background:rgba(8,18,36,.75);border:1px solid var(--line);backdrop-filter:blur(4px);z-index:3}
+.cmp .lab.l{inset-inline-start:10px;color:var(--mut)} .cmp .lab.r{inset-inline-end:10px;color:var(--ac)}
+.cmp #hd{position:absolute;top:0;bottom:0;width:2px;background:var(--ac);z-index:4;pointer-events:none}
+.cmp #hd::after{content:"";position:absolute;top:50%;inset-inline-start:-14px;width:30px;height:30px;
+  margin-top:-15px;border-radius:50%;background:var(--ac);box-shadow:0 0 18px rgba(90,209,255,.7)}
+input[type=range]{width:100%;max-width:560px;accent-color:var(--ac);cursor:pointer}
+
+/* illustrations float */
+.ill{animation:fl 5s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-9px)}}
+.flow path{stroke-dasharray:7 6;animation:dash 1.1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-26}}
+.pulse{animation:pls 1.8s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes pls{50%{opacity:.35}}
+.lens{animation:scan 6s ease-in-out infinite}
+@keyframes scan{0%,100%{transform:translate(14px,24px)}50%{transform:translate(150px,66px)}}
+.spin{animation:sp 18s linear infinite;transform-origin:center;transform-box:fill-box}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* stat tiles */
+.stat{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:clamp(12px,1.3vw,18px)}
+.stat .num{font-family:var(--disp);font-weight:800;font-size:clamp(22px,2.6vw,34px);color:var(--ac);
+  font-variant-numeric:tabular-nums}
+.stat .lb{font-size:13px;color:var(--mut);font-weight:700}
+
+/* chrome bars */
+#bar{position:fixed;left:0;right:0;bottom:0;height:72px;z-index:6;
+  padding:0 max(16px,env(safe-area-inset-left,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-right,0px));
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(180deg,rgba(9,20,40,.4),rgba(9,20,40,.96));border-top:1px solid var(--line);
+  backdrop-filter:blur(10px)}
+#bar .mid{flex:1;display:flex;align-items:center;gap:14px;justify-content:center;min-width:0}
+#dots{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+#dots i{width:9px;height:9px;border-radius:50%;background:var(--surface2);border:1px solid var(--line);
+  cursor:pointer;transition:.2s}
+#dots i.on{background:linear-gradient(135deg,var(--ac),var(--ac2));border-color:transparent;transform:scale(1.25)}
+#ct{font-family:var(--mono);font-size:14px;color:var(--mut);direction:ltr;min-width:66px;text-align:center}
 #tm{font-variant-numeric:tabular-nums;direction:ltr}
-.cmp{position:relative;width:100%;max-width:520px;aspect-ratio:2/1;border-radius:12px;overflow:hidden;border:1px solid var(--ln)}
-.cmp canvas{position:absolute;inset:0;width:100%;height:100%}
-#cl{clip-path:inset(0 50% 0 0)}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(600px 420px at 88% 8%,rgba(143,227,255,.3),transparent 70%),radial-gradient(520px 420px at 8% 92%,rgba(130,150,255,.28),transparent 70%),linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px) 0 0/40px 40px}
-#bgc{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;opacity:.55}
-.s{z-index:1}
-.ill{max-height:190px;animation:fl2 4s ease-in-out infinite}
-@keyframes fl2{50%{transform:translateY(-8px)}}
-.flow path{stroke-dasharray:6 5;animation:fl 1s linear infinite}
-@keyframes fl{to{stroke-dashoffset:-22}}
-.lens{animation:sc 5s ease-in-out infinite}
-@keyframes sc{0%,100%{transform:translate(15px,25px)}50%{transform:translate(135px,60px)}}
-.pulse{animation:pl 1.6s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
-@keyframes pl{50%{opacity:.4}}
+#prog{position:fixed;top:env(safe-area-inset-top,0px);left:0;height:3px;z-index:7;width:0;
+  background:linear-gradient(90deg,var(--ac),var(--ac2),var(--gold));transition:width .4s cubic-bezier(.2,.7,.2,1)}
+#notes{position:fixed;left:max(14px,env(safe-area-inset-left,0px));right:max(14px,env(safe-area-inset-right,0px));
+  bottom:84px;max-height:40vh;overflow:auto;z-index:8;display:none;
+  background:rgba(10,22,44,.97);border:1px solid var(--line2);border-radius:16px;
+  padding:18px 22px;font-size:clamp(15px,1.4vw,19px);line-height:1.85;
+  box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#notes.on{display:block;animation:in .3s ease}
+#notes .nt{color:var(--gold);font-weight:800;margin-bottom:6px;display:block}
+
+@media (max-width:760px){
+  .g2,.g3{grid-template-columns:1fr}
+  .s{justify-content:flex-start;padding-top:24px}
+  #ct{min-width:52px;font-size:12px}
+  #dots{max-width:40vw}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
-</head>
-<body>
-<div id="prog"></div><canvas id="bgc"></canvas>
 
-<!-- 1 -->
-<section class="s on">
- <svg viewBox="0 0 600 70" width="100%" style="max-height:60px;opacity:.5" aria-hidden="true"><g class="mono" fill="#8fe3ff" font-size="16" id="bits"></g></svg>
- <span class="en">Digital Forensics · الأمن السيبراني</span>
- <h1>إخفاء المعلومات داخل الصور والصوت وطرق كشفها</h1>
- <h2 class="en" style="font-size:clamp(18px,3vw,30px)">Steganography &amp; Steganalysis</h2>
- <svg class="ill" viewBox="0 0 240 150" aria-hidden="true"><path d="M120 8 L200 36 V80 C200 112 165 135 120 146 C75 135 40 112 40 80 V36Z" fill="rgba(143,227,255,.18)" stroke="#8fe3ff" stroke-width="3"/><circle cx="120" cy="68" r="14" fill="none" stroke="#ffd98a" stroke-width="4"/><rect x="108" y="76" width="24" height="28" rx="4" fill="#ffd98a"/><g class="pulse" font-family="monospace" font-size="11" fill="#8fe3ff"><text x="52" y="60">0110</text><text x="160" y="100">1011</text></g></svg>
- <div class="card"><p>المادة: [اسم المادة] — التحقيق الجنائي الرقمي</p><p>أعضاء المجموعة: [العضو 1] · [العضو 2] · [العضو 3]</p></div>
-</section>
+<div id="prog"></div>
+<canvas id="bgc"></canvas>
+<div id="deck">
 
-<!-- 2 -->
-<section class="s">
- <h2>المقدمة وأهمية الموضوع</h2>
- <div class="row">
-  <div class="card"><p><span class="en">Steganography</span>: إخفاء وجود الرسالة نفسها داخل ملف يبدو عاديًا (صورة، صوت…).</p></div>
-  <div class="card"><ul><li>استخدام مشروع: العلامات المائية (<span class="en">Watermarking</span>) وحماية الملكية</li><li>إساءة الاستخدام: تهريب بيانات أو إخفاء اتصالات</li><li>المحقق يحتاج الكشف دون افتراض النية</li></ul></div>
-  <div class="card" style="text-align:center"><svg class="ill" viewBox="0 0 220 150" aria-label="صورة تحمل رسالة خفية"><rect x="10" y="8" width="200" height="116" rx="12" fill="rgba(255,255,255,.12)" stroke="#8fe3ff" stroke-width="2"/><circle cx="165" cy="38" r="13" fill="#ffd98a"/><path d="M10 112 L70 50 L110 92 L140 68 L210 112 V124 H10Z" fill="rgba(143,227,255,.45)"/><g class="pulse"><rect x="85" y="62" width="50" height="34" rx="5" fill="#27406b" stroke="#ffd98a"/><path d="M85 64 L110 82 L135 64" fill="none" stroke="#ffd98a"/></g><text x="110" y="143" fill="#cfdcf0" font-size="12" text-anchor="middle" font-family="Tajawal,sans-serif">صورة تبدو عادية وتحمل رسالة (توضيحي)</text></svg></div>
-  <div class="card"><b>من التاريخ</b><ul><li>قديمًا: حبر سري وألواح مغطاة بالشمع</li><li>اليوم: صور وصوت وفيديو رقمي</li><li>الفكرة ثابتة: الحامل يبدو بريئًا</li></ul></div>
+<!-- 1 · TITLE -->
+<section class="s on" data-t="35">
+ <div class="wrap" style="align-items:center;text-align:center">
+  <div class="ey"><span class="n">00</span> Digital Forensics · الأمن السيبراني</div>
+  <svg class="ill" viewBox="0 0 300 170" width="300" aria-hidden="true">
+   <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ad1ff"/><stop offset="1" stop-color="#8f7bff"/></linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="55%"><stop offset="0" stop-color="#5ad1ff" stop-opacity=".35"/><stop offset="1" stop-color="#5ad1ff" stop-opacity="0"/></radialGradient>
+   </defs>
+   <circle cx="150" cy="75" r="80" fill="url(#glow)"/>
+   <g class="spin" opacity=".5"><circle cx="150" cy="75" r="68" fill="none" stroke="url(#g1)" stroke-width="1" stroke-dasharray="4 10"/></g>
+   <path d="M150 14 L214 40 V86 C214 124 186 150 150 162 C114 150 86 124 86 86 V40Z" fill="rgba(90,209,255,.10)" stroke="url(#g1)" stroke-width="2.5"/>
+   <circle cx="150" cy="66" r="15" fill="none" stroke="var(--gold)" stroke-width="4.5"/>
+   <rect x="135" y="76" width="30" height="34" rx="5" fill="var(--gold)"/>
+   <g class="pulse" font-family="monospace" font-size="11" fill="#9fe4ff">
+    <text x="60" y="52">0110</text><text x="206" y="104">1011</text><text x="74" y="126">1001</text></g>
+  </svg>
+  <h1>إخفاء المعلومات داخل الصور والصوت<br>وطرق كشفها جنائيًا</h1>
+  <div class="sub en" style="font-size:clamp(17px,2.2vw,28px)">Steganography &amp; Steganalysis</div>
+  <div class="card ac" style="max-width:720px;margin-top:6px">
+   <div class="g2" style="gap:10px;text-align:start">
+    <p><span class="dim" style="color:var(--dim)">المادة</span><br><b>[اسم المادة] — التحقيق الجنائي الرقمي</b></p>
+    <p><span class="dim" style="color:var(--dim)">المجموعة</span><br><b>[العضو 1] · [العضو 2] · [العضو 3]</b></p>
+   </div>
+  </div>
  </div>
 </section>
 
-<!-- 3 -->
-<section class="s">
- <h2><span class="en">Steganography</span> مقابل <span class="en">Cryptography</span></h2>
- <table><tr><th></th><th>Cryptography التشفير</th><th>Steganography الإخفاء</th><th>Steganalysis الكشف</th></tr>
- <tr><td>الهدف</td><td>إخفاء معنى الرسالة</td><td>إخفاء وجود الرسالة</td><td>اكتشاف وجود إخفاء محتمل</td></tr>
- <tr><td>الناتج</td><td>نص مشفّر ظاهر أنه سري</td><td>ملف يبدو عاديًا</td><td>تقدير واحتمال، لا حكم قطعي</td></tr></table>
- <p class="card">يمكن الجمع بينهما: تُشفَّر الرسالة أولًا ثم تُخفى، فيصعب أيضًا فهم محتواها لو اكتُشف الإخفاء.</p>
-</section>
-
-<!-- 4 -->
-<section class="s">
- <h2>كيف تعمل التقنية؟</h2>
- <svg viewBox="0 0 760 190" role="img" aria-label="مخطط الإخفاء والاستخراج">
-  <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#8fe3ff"/></marker></defs>
-  <g fill="rgba(255,255,255,.14)" stroke="#8fe3ff" stroke-width="1.5">
-   <rect x="610" y="20" width="140" height="55" rx="10"/><rect x="610" y="115" width="140" height="55" rx="10"/>
-   <rect x="365" y="55" width="150" height="80" rx="10"/><rect x="130" y="55" width="150" height="80" rx="10"/><rect x="5" y="55" width="80" height="80" rx="10"/></g>
-  <g fill="#f6f9ff" font-size="15" text-anchor="middle" font-family="Tajawal,sans-serif">
-   <text x="680" y="43">الرسالة السرية</text><text x="680" y="62" fill="#8fe3ff">Secret Message</text>
-   <text x="680" y="138">الملف الحامل</text><text x="680" y="157" fill="#8fe3ff">Cover File</text>
-   <text x="440" y="90">التضمين</text><text x="440" y="110" fill="#8fe3ff">Embedding</text>
-   <text x="205" y="90">الملف الناتج</text><text x="205" y="110" fill="#8fe3ff">Stego File</text>
-   <text x="45" y="90">استخراج</text><text x="45" y="110" fill="#8fe3ff">Extract</text></g>
-  <g class="flow" stroke="#8fe3ff" stroke-width="2" fill="none" marker-end="url(#ar)">
-   <path d="M610 50 L520 80"/><path d="M610 140 L520 112"/><path d="M365 95 L285 95"/><path d="M130 95 L90 95"/></g>
-  <text x="440" y="175" fill="#ffd98a" font-size="13" text-anchor="middle" font-family="Tajawal,sans-serif">مفتاح اختياري (Stego Key)</text>
- </svg>
-</section>
-
-<!-- 5 -->
-<section class="s">
- <h2>الصور: أقل بت أهمية <span class="en">(LSB)</span></h2>
- <p>نغيّر آخر بت في قيمة البكسل ليحمل بتًا من الرسالة. التغيير لا يتجاوز ±1 في القيمة.</p>
- <div class="card">
-  <p>قيمة بكسل أصلية: <b class="mono">150</b> · بت الرسالة:
-   <button id="b0" class="act">0</button><button id="b1">1</button></p>
-  <p class="mono">قبل: <span id="bf"></span> = 150</p>
-  <p class="mono">بعد: <span id="af"></span> = <b id="nv"></b></p>
-  <svg id="px" viewBox="0 0 240 70" style="max-width:340px" aria-label="شبكة بكسلات توضيحية"></svg><p style="font-size:14px">شبكة بكسلات مكبّرة (توضيحي): البكسل الأصفر هو الذي تغيّر فيه آخر بت.</p>
+<!-- 2 · INTRO -->
+<section class="s" data-t="45">
+ <div class="wrap">
+  <div class="ey"><span class="n">01</span> المقدمة</div>
+  <h2>ما هو الإخفاء ولماذا يهمّ المحقق؟</h2>
+  <p class="lead"><span class="en">Steganography</span> هو إخفاء <b>وجود</b> الرسالة نفسها داخل ملف يبدو عاديًا تمامًا — صورة أو مقطع صوتي — بحيث لا يلفت أي انتباه.</p>
+  <div class="g3">
+   <div class="card ac">
+    <svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+    <b class="t">استخدام مشروع</b>
+    <ul class="clean"><li>العلامات المائية <span class="en">Watermarking</span></li><li>حماية حقوق الملكية</li><li>إثبات مصدر الملفات</li></ul>
+   </div>
+   <div class="card">
+    <svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+    <b class="t">إساءة الاستخدام</b>
+    <ul class="clean"><li>تهريب بيانات <span class="en">Exfiltration</span></li><li>إخفاء اتصالات خبيثة</li><li>تمرير أوامر داخل الصور</li></ul>
+   </div>
+   <div class="card gold">
+    <svg class="ic" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <b class="t">دور المحقق</b>
+    <ul class="clean"><li>الكشف دون افتراض النية</li><li>تمييز العادي من المشبوه</li><li>توثيق كل خطوة</li></ul>
+   </div>
+  </div>
+  <div class="card" style="border-color:var(--line2)">
+   <div class="row" style="align-items:center">
+    <div style="flex:0 0 auto"><svg width="80" height="56" viewBox="0 0 80 56" aria-hidden="true"><rect x="2" y="2" width="76" height="52" rx="8" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><path d="M4 42 28 22 42 34 56 24 76 42 76 52 4 52Z" fill="rgba(90,209,255,.3)"/><circle cx="58" cy="16" r="7" fill="var(--gold)"/></svg></div>
+    <p style="flex:1 1 300px"><b>من التاريخ:</b> قديمًا كان الحبر السري والألواح المغطاة بالشمع، واليوم صور وصوت وفيديو رقمي — لكن الفكرة واحدة لم تتغير: <b>الحامل يبدو بريئًا</b> بينما يخبّئ رسالة.</p>
+   </div>
+  </div>
  </div>
 </section>
 
-<!-- 6 -->
-<section class="s">
- <h2>أثر الإخفاء على الصورة</h2>
- <span class="tag">مثال توضيحي مُنشأ للشرح وليس دليلًا جنائيًا</span>
- <div class="row">
-  <div><div class="cmp"><canvas id="c1" width="260" height="130"></canvas><canvas id="cl" width="260" height="130"></canvas></div>
-   <input type="range" id="sl" min="0" max="100" value="50" style="width:100%;max-width:520px" aria-label="مقارنة"></div>
-  <div class="card"><svg viewBox="0 0 320 130" id="hist"></svg><p style="font-size:15px">رسم توضيحي: بعد LSB تميل قيم البكسل المتجاورة إلى التقارب (أزواج متساوية تقريبًا).</p></div>
- </div>
- <p>غياب تغيير مرئي لا يعني غياب بيانات؛ فالعين لا ترى فرق ±1، لكن الإحصاء قد يلتقطه.</p>
-</section>
-
-<!-- 7 -->
-<section class="s">
- <h2>الصوت <span class="en">(Audio Steganography)</span></h2>
- <div class="row">
-  <div class="card"><ul><li><span class="en">LSB</span> في العينات الصوتية (<span class="en">Samples</span>)</li><li>المجال الترددي (<span class="en">Frequency Domain</span>): تعديل معاملات الطيف</li><li>تقنيات أخرى مثل <span class="en">Echo Hiding</span></li></ul></div>
-  <div class="card"><canvas id="wv" width="360" height="70" style="width:100%"></canvas><canvas id="sp" width="360" height="70" style="width:100%;margin-top:6px"></canvas><p style="font-size:14px">موجة صوتية وطيف ترددي (Spectrogram): رسم توضيحي مُنشأ للشرح.</p></div>
- </div>
- <p>الكشف ليس مستحيلًا ولا سهلًا دائمًا؛ يتوقف على التقنية وحجم الرسالة وجودة الملف.</p>
-</section>
-
-<!-- 8 -->
-<section class="s">
- <h2>الكشف الجنائي <span class="en">(Steganalysis)</span></h2>
- <div class="row">
-  <div class="card"><b>ثلاثة مستويات مختلفة</b><ul><li>اكتشاف إخفاء محتمل</li><li>استخراج البيانات المخفية</li><li>إثبات المصدر أو هوية الفاعل (أصعبها)</li></ul></div>
-  <div class="card"><b>الأساليب</b><ul><li>فحص إحصائي وتوزيع البكسلات والقنوات اللونية</li><li>مقارنة بنسخة أصلية موثوقة</li><li>تحليل الصوت والترددات</li><li><span class="en">Metadata</span>: مؤشر مساعد وليس دليلًا حاسمًا</li></ul></div>
-  <div class="card" style="text-align:center"><svg viewBox="0 0 240 150" style="max-height:190px" aria-label="عدسة تفحص البكسلات"><defs><pattern id="pp" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="10" height="10" rx="2" fill="rgba(255,255,255,.28)"/></pattern></defs><rect x="0" y="0" width="240" height="150" fill="url(#pp)"/><rect x="98" y="62" width="10" height="10" rx="2" fill="#ffd98a"/><rect x="146" y="86" width="10" height="10" rx="2" fill="#ffd98a"/><rect x="50" y="38" width="10" height="10" rx="2" fill="#ffd98a"/><g class="lens"><circle cx="40" cy="40" r="30" fill="rgba(143,227,255,.15)" stroke="#8fe3ff" stroke-width="4"/><line x1="62" y1="62" x2="88" y2="88" stroke="#8fe3ff" stroke-width="7" stroke-linecap="round"/></g></svg><p style="font-size:14px">فحص البكسلات بحثًا عن أنماط غير طبيعية (رسم توضيحي)</p></div>
- </div>
-</section>
-
-<!-- 9 -->
-<section class="s">
- <h2>الأدوات وحدودها</h2>
- <table><tr><th>الأداة</th><th>الوظيفة</th><th>الحدود</th></tr>
- <tr><td class="en">StegExpose</td><td>كشف إحصائي لـ LSB في الصور غير المضغوطة</td><td>نتيجة احتمالية، وأضعف مع الرسائل الصغيرة</td></tr>
- <tr><td class="en">zsteg</td><td>فحص LSB وأنماط الإخفاء في PNG وBMP</td><td>لا يغطي JPEG ولا كل التقنيات</td></tr>
- <tr><td class="en">StegSeek</td><td>تخمين كلمة مرور Steghide بسرعة (قوة غاشمة)</td><td>يستهدف Steghide فقط، ويحتاج قائمة كلمات</td></tr>
- <tr><td class="en">Sonic Visualiser</td><td>عرض الطيف والموجة صوتيًا</td><td>أداة عرض بصري؛ التفسير على المحقق</td></tr></table>
- <p class="card">لا أداة تعطي حكمًا قطعيًا؛ النتائج تحتاج تفسيرًا وتعزيزًا بأدلة أخرى.</p>
-</section>
-
-<!-- 10 -->
-<section class="s">
- <h2>سيناريو افتراضي وتحليل الأدلة</h2>
- <span class="tag">افتراضي — ليس تجربة منفذة</span>
- <svg viewBox="0 0 760 80" role="img" aria-label="مسار الفحص">
-  <g fill="rgba(255,255,255,.14)" stroke="#8fe3ff"><rect x="640" y="15" width="115" height="50" rx="8"/><rect x="530" y="15" width="100" height="50" rx="8" /><rect x="425" y="15" width="95" height="50" rx="8"/><rect x="320" y="15" width="95" height="50" rx="8"/><rect x="215" y="15" width="95" height="50" rx="8"/><rect x="110" y="15" width="95" height="50" rx="8"/><rect x="5" y="15" width="95" height="50" rx="8"/></g>
-  <g fill="#f6f9ff" font-size="12" text-anchor="middle" font-family="Tajawal,sans-serif"><text x="697" y="45">استلام الدليل</text><text x="580" y="45">نسخة جنائية</text><text x="472" y="45">SHA-256</text><text x="367" y="45">فحص الخصائص</text><text x="262" y="45">أدوات التحليل</text><text x="157" y="45">تقييم النتائج</text><text x="52" y="45">توثيق</text></g>
- </svg>
- <p style="font-size:16px">صورة PNG على جهاز قيد الفحص: تُفحص بالنسخة فقط، ويُقارن الهاش قبل الفحص وبعده.</p>
- <table><tr><th>الملاحظة</th><th>التفسير المحتمل</th><th>حدود الاستنتاج</th></tr>
- <tr><td>مؤشر إحصائي مرتفع على قناة الأحمر</td><td>تعديل LSB، أو معالجة عادية للصورة</td><td>لا يثبت وجود رسالة</td></tr>
- <tr><td>بيانات بعد نهاية الملف</td><td>إلحاق بيانات أو خلل في الملف</td><td>لا يحدد المصدر أو النية</td></tr></table>
-</section>
-
-<!-- 11 -->
-<section class="s">
- <h2>التحديات والخلاصة</h2>
- <div class="row">
-  <div class="card"><ul><li>الضغط وإعادة الحفظ يغيّران أو يتلفان البتات</li><li>التشفير المسبق يجعل البيانات تبدو عشوائية</li><li>تعدد التقنيات وصعوبة تغطيتها بأداة واحدة</li><li>نتائج إيجابية كاذبة (<span class="en">False Positives</span>)</li></ul></div>
-  <div class="card" style="border-color:var(--wn)"><b>النقطتان الجوهريتان</b><ul><li>نمط غير طبيعي لا يثبت وجود رسالة</li><li>العثور على بيانات مخفية لا يثبت ارتكاب جريمة</li></ul></div>
+<!-- 3 · VS -->
+<section class="s" data-t="50">
+ <div class="wrap">
+  <div class="ey"><span class="n">02</span> المفاهيم</div>
+  <h2>التشفير · الإخفاء · الكشف</h2>
+  <div class="tbl">
+  <table>
+   <thead><tr><th></th><th>Cryptography — التشفير</th><th>Steganography — الإخفاء</th><th>Steganalysis — الكشف</th></tr></thead>
+   <tbody>
+   <tr><td>الفكرة</td><td>إخفاء <b>معنى</b> الرسالة</td><td>إخفاء <b>وجود</b> الرسالة</td><td>اكتشاف إخفاء <b>محتمل</b></td></tr>
+   <tr><td>الناتج</td><td>نص مشفّر يبدو واضحًا أنه سرّي</td><td>ملف يبدو عاديًا تمامًا</td><td>تقدير واحتمال — لا حكم قطعي</td></tr>
+   <tr><td>عند الاعتراض</td><td>«هناك سرّ، لكن لا أفهمه»</td><td>«لا شيء يستحق النظر هنا»</td><td>«هذا الملف يستحق فحصًا أعمق»</td></tr>
+   </tbody>
+  </table>
+  </div>
+  <div class="card ac">
+   <div class="row" style="align-items:center">
+    <svg width="150" height="52" viewBox="0 0 150 52" style="flex:0 0 auto" aria-hidden="true">
+     <g font-family="monospace" font-size="12">
+      <rect x="2" y="12" width="40" height="28" rx="6" fill="rgba(143,123,255,.2)" stroke="var(--ac2)"/><text x="22" y="30" fill="#c9bcff" text-anchor="middle">msg</text>
+      <path d="M44 26 H64" stroke="var(--ac)" stroke-width="2" marker-end="url(#a3)"/>
+      <rect x="66" y="12" width="40" height="28" rx="6" fill="rgba(90,209,255,.18)" stroke="var(--ac)"/><text x="86" y="30" fill="#9fe4ff" text-anchor="middle">🔒</text>
+      <path d="M108 26 H128" stroke="var(--ac)" stroke-width="2" marker-end="url(#a3)"/>
+      <rect x="112" y="4" width="36" height="44" rx="7" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><path d="M114 40 126 30 134 36 146 28 146 46 114 46Z" fill="rgba(90,209,255,.35)"/>
+      <defs><marker id="a3" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0 7 3.5 0 7Z" fill="var(--ac)"/></marker></defs>
+     </g>
+    </svg>
+    <p style="flex:1 1 320px"><b>الأقوى هو الجمع بينهما:</b> تُشفَّر الرسالة أولًا، ثم تُخفى داخل صورة. فحتى لو اكتشف المحقق وجود إخفاء، يبقى المحتوى نفسه غير مفهوم.</p>
+   </div>
+  </div>
  </div>
 </section>
 
-<!-- 12 -->
-<section class="s">
- <h2>المراجع <span class="en">(References)</span></h2>
- <ul dir="ltr" style="font-size:15px;text-align:left">
-  <li>Fridrich, J. (2009). <i>Steganography in Digital Media</i>. Cambridge University Press.</li>
-  <li>Provos, N. &amp; Honeyman, P. (2003). Hide and Seek: An Introduction to Steganography. <i>IEEE Security &amp; Privacy</i>, 1(3). doi:10.1109/MSECP.2003.1203220</li>
-  <li>Westfeld, A. &amp; Pfitzmann, A. (1999). Attacks on Steganographic Systems. <i>Information Hiding</i>, LNCS 1768. doi:10.1007/10719724_5</li>
-  <li>Cheddad, A. et al. (2010). Digital image steganography: Survey and analysis of current methods. <i>Signal Processing</i>, 90(3). doi:10.1016/j.sigpro.2009.08.010</li>
-  <li>Tools: github.com/zed-0xff/zsteg · github.com/RickdeJager/stegseek · github.com/b3dk7/StegExpose · sonicvisualiser.org</li>
- </ul>
- <p class="card" style="font-size:15px">كل الرسومات والصور في هذا العرض مُنشأة داخل الصفحة لأغراض الشرح، وليست صورًا أصلية أو أدلة. يُنصح بالتحقق من الروابط وأرقام DOI قبل التسليم.</p>
+<!-- 4 · HOW IT WORKS -->
+<section class="s" data-t="50">
+ <div class="wrap">
+  <div class="ey"><span class="n">03</span> آلية العمل</div>
+  <h2>كيف تُضمَّن الرسالة وتُستخرج؟</h2>
+  <div class="card ac" style="padding:clamp(18px,2vw,30px)">
+  <svg viewBox="0 0 820 230" role="img" aria-label="مخطط تضمين واستخراج الرسالة">
+   <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto"><path d="M0 0 9 4.5 0 9Z" fill="var(--ac)"/></marker>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.1)"/><stop offset="1" stop-color="rgba(255,255,255,.04)"/></linearGradient>
+   </defs>
+   <!-- inputs -->
+   <g font-family="Tajawal,sans-serif">
+    <rect x="662" y="14" width="150" height="62" rx="12" fill="url(#box)" stroke="var(--ac2)" stroke-width="1.5"/>
+    <text x="737" y="42" fill="#fff" font-size="16" text-anchor="middle" font-weight="700">الرسالة السرية</text>
+    <text x="737" y="62" fill="#c9bcff" font-size="13" text-anchor="middle" font-family="monospace" direction="ltr">Secret Message</text>
+
+    <rect x="662" y="150" width="150" height="62" rx="12" fill="url(#box)" stroke="var(--ac)" stroke-width="1.5"/>
+    <text x="737" y="178" fill="#fff" font-size="16" text-anchor="middle" font-weight="700">الملف الحامل</text>
+    <text x="737" y="198" fill="#9fe4ff" font-size="13" text-anchor="middle" font-family="monospace" direction="ltr">Cover File</text>
+
+    <!-- embed -->
+    <rect x="432" y="78" width="168" height="78" rx="14" fill="rgba(90,209,255,.12)" stroke="var(--ac)" stroke-width="2"/>
+    <circle cx="516" cy="104" r="15" fill="none" stroke="var(--gold)" stroke-width="3" class="spin"/>
+    <path d="M510 104 h12 M516 98 v12" stroke="var(--gold)" stroke-width="3"/>
+    <text x="516" y="140" fill="#fff" font-size="17" text-anchor="middle" font-weight="800">التضمين</text>
+
+    <!-- stego -->
+    <rect x="212" y="78" width="168" height="78" rx="14" fill="rgba(84,230,168,.1)" stroke="var(--good)" stroke-width="2"/>
+    <path d="M232 132 262 106 282 122 304 104 360 132 360 146 232 146Z" fill="rgba(84,230,168,.3)"/>
+    <circle cx="296" cy="96" r="8" fill="var(--gold)"/>
+    <text x="296" y="166" fill="var(--good)" font-size="13" text-anchor="middle" font-family="monospace" direction="ltr">Stego File</text>
+
+    <!-- extract -->
+    <rect x="18" y="86" width="150" height="62" rx="12" fill="url(#box)" stroke="var(--ac2)" stroke-width="1.5"/>
+    <text x="93" y="114" fill="#fff" font-size="16" text-anchor="middle" font-weight="700">الاستخراج</text>
+    <text x="93" y="134" fill="#c9bcff" font-size="13" text-anchor="middle" font-family="monospace" direction="ltr">Extract</text>
+   </g>
+   <!-- arrows -->
+   <g class="flow" stroke="var(--ac)" stroke-width="2.5" fill="none" marker-end="url(#ar)">
+    <path d="M662 52 L600 92"/><path d="M662 174 L600 142"/>
+    <path d="M432 117 L380 117"/><path d="M212 117 L168 117"/>
+   </g>
+   <text x="516" y="34" fill="var(--gold)" font-size="14" text-anchor="middle" font-family="Tajawal,sans-serif" font-weight="700">↑ مفتاح اختياري (Stego Key)</text>
+  </svg>
+  </div>
+  <div class="row">
+   <span class="pill">① يُدمج السرّ مع الحامل</span>
+   <span class="pill">② ينتج ملف يبدو طبيعيًا</span>
+   <span class="pill">③ يستخرجه الطرف الآخر بالمفتاح</span>
+  </div>
+ </div>
 </section>
+
+<!-- 5 · LSB interactive -->
+<section class="s" data-t="60">
+ <div class="wrap">
+  <div class="ey"><span class="n">04</span> في الصور</div>
+  <h2>أقل بت أهمية <span class="en" style="font-size:.7em">(LSB)</span></h2>
+  <p class="lead">نغيّر <b>آخر بت فقط</b> في قيمة كل بكسل ليحمل بتًا من الرسالة. التغيير في القيمة لا يتجاوز ±1 — فرقٌ لا تراه العين.</p>
+  <div class="g2" style="grid-template-columns:1.3fr 1fr">
+   <div class="card ac">
+    <div class="row" style="align-items:center;margin-bottom:14px">
+     <span>قيمة بكسل أصلية: <b class="mono" style="font-size:1.2em;color:var(--gold)">150</b></span>
+     <span style="flex:1"></span>
+     <span>بت الرسالة:</span>
+     <button id="b0" class="act">0</button><button id="b1">1</button>
+    </div>
+    <p class="mono" style="color:var(--mut);margin-bottom:6px;direction:ltr">قبل · 150</p>
+    <div class="bits" id="bf"></div>
+    <p class="mono" style="color:var(--mut);margin:14px 0 6px;direction:ltr">بعد · <b id="nv" style="color:var(--gold)"></b></p>
+    <div class="bits" id="af"></div>
+    <p style="margin-top:14px;font-size:14px;color:var(--dim)">الخانة الذهبية هي أقل بت أهمية — وهي وحدها التي قد تتغيّر.</p>
+   </div>
+   <div class="card">
+    <b class="t">شبكة بكسلات مكبّرة</b>
+    <svg id="px" viewBox="0 0 260 150" aria-label="شبكة بكسلات توضيحية"></svg>
+    <p style="font-size:14px;color:var(--dim);margin-top:8px">البكسلات الذهبية هي التي حُمِّل فيها بتّ من الرسالة (توضيحي).</p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- 6 · visual impact -->
+<section class="s" data-t="45">
+ <div class="wrap">
+  <div class="ey"><span class="n">05</span> الأثر البصري</div>
+  <h2>هل يظهر الفرق على الصورة؟</h2>
+  <span class="tag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> مثال توضيحي مُنشأ للشرح — ليس دليلًا جنائيًا</span>
+  <div class="g2" style="grid-template-columns:1.1fr .9fr;align-items:start">
+   <div>
+    <div class="cmp">
+     <canvas id="c1" width="320" height="180"></canvas>
+     <canvas id="cl" width="320" height="180"></canvas>
+     <span class="lab l">الأصلية</span><span class="lab r">بعد الإخفاء</span>
+     <div id="hd"></div>
+    </div>
+    <input type="range" id="sl" min="0" max="100" value="50" aria-label="شريط المقارنة" style="margin-top:12px">
+    <p style="font-size:14px;color:var(--dim);margin-top:6px">حرّك الشريط لمقارنة الصورتين — الفرق غير مرئي للعين.</p>
+   </div>
+   <div class="card ac">
+    <b class="t">لكن الإحصاء يلتقطه</b>
+    <svg viewBox="0 0 340 150" id="hist" aria-label="رسم توزيع قيم البكسل"></svg>
+    <p style="font-size:14px;color:var(--mut);margin-top:8px">بعد <span class="en">LSB</span> تتقارب قيم الأزواج المتجاورة (مثلًا 150 و151) حتى تتساوى تقريبًا — وهذا ما ترصده أدوات الكشف.</p>
+   </div>
+  </div>
+  <p style="color:var(--mut)"><b>الخلاصة:</b> غياب تغيير مرئي لا يعني غياب بيانات؛ العين لا ترى ±1، لكن توزيع القيم يتغيّر.</p>
+ </div>
+</section>
+
+<!-- 7 · audio -->
+<section class="s" data-t="55">
+ <div class="wrap">
+  <div class="ey"><span class="n">06</span> في الصوت</div>
+  <h2>الإخفاء داخل الصوت <span class="en" style="font-size:.6em">(Audio)</span></h2>
+  <div class="g2" style="grid-template-columns:.85fr 1.15fr">
+   <div class="card">
+    <b class="t">أين تُخبّأ البتات؟</b>
+    <ul class="clean">
+     <li><span class="en">LSB</span> في العيّنات الصوتية <span class="en">(Samples)</span></li>
+     <li>المجال الترددي <span class="en">(Frequency Domain)</span></li>
+     <li>إخفاء الصدى <span class="en">(Echo Hiding)</span></li>
+     <li>الطور <span class="en">(Phase Coding)</span></li>
+    </ul>
+   </div>
+   <div class="card ac">
+    <b class="t">الموجة والطيف الترددي</b>
+    <canvas id="wv" width="420" height="80" style="width:100%"></canvas>
+    <canvas id="sp" width="420" height="90" style="width:100%;margin-top:8px;border-radius:8px"></canvas>
+    <p style="font-size:13px;color:var(--dim);margin-top:6px">موجة وطيف <span class="en">(Spectrogram)</span> — توضيحي. بعض الإخفاء يظهر كأنماط غريبة في الترددات العالية.</p>
+   </div>
+  </div>
+  <p style="color:var(--mut)">الكشف ليس مستحيلًا ولا سهلًا دائمًا — يتوقّف على <b>التقنية</b> و<b>حجم الرسالة</b> و<b>جودة الملف</b>.</p>
+ </div>
+</section>
+
+<!-- 8 · steganalysis -->
+<section class="s" data-t="55">
+ <div class="wrap">
+  <div class="ey"><span class="n">07</span> الكشف الجنائي</div>
+  <h2>التحليل الجنائي <span class="en" style="font-size:.6em">(Steganalysis)</span></h2>
+  <div class="g3">
+   <div class="card ac">
+    <b class="t">ثلاثة مستويات</b>
+    <ul class="clean"><li>① اكتشاف إخفاء محتمل</li><li>② استخراج البيانات المخفية</li><li>③ إثبات المصدر <b>(الأصعب)</b></li></ul>
+   </div>
+   <div class="card">
+    <b class="t">الأساليب</b>
+    <ul class="clean"><li>فحص إحصائي للقنوات اللونية</li><li>مقارنة بنسخة أصلية موثوقة</li><li>تحليل الترددات الصوتية</li><li><span class="en">Metadata</span> — مؤشر مساعد فقط</li></ul>
+   </div>
+   <div class="card gold" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <svg viewBox="0 0 220 140" style="max-height:140px" aria-label="عدسة تفحص البكسلات">
+     <defs><pattern id="pp" width="13" height="13" patternUnits="userSpaceOnUse"><rect width="10" height="10" rx="2" fill="rgba(200,220,255,.18)"/></pattern></defs>
+     <rect x="4" y="4" width="212" height="132" rx="8" fill="url(#pp)"/>
+     <rect x="92" y="58" width="10" height="10" rx="2" fill="var(--gold)" class="pulse"/>
+     <rect x="140" y="82" width="10" height="10" rx="2" fill="var(--gold)" class="pulse"/>
+     <rect x="48" y="34" width="10" height="10" rx="2" fill="var(--gold)" class="pulse"/>
+     <g class="lens"><circle cx="40" cy="40" r="28" fill="rgba(90,209,255,.14)" stroke="var(--ac)" stroke-width="4"/><line x1="60" y1="60" x2="84" y2="84" stroke="var(--ac)" stroke-width="7" stroke-linecap="round"/></g>
+    </svg>
+    <p style="font-size:13px;color:var(--dim);text-align:center;margin-top:6px">البحث عن أنماط غير طبيعية في البكسلات</p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- 9 · tools -->
+<section class="s" data-t="50">
+ <div class="wrap">
+  <div class="ey"><span class="n">08</span> الأدوات</div>
+  <h2>أدوات الكشف وحدودها</h2>
+  <div class="tbl">
+  <table>
+   <thead><tr><th>الأداة</th><th>الوظيفة</th><th>الحدود</th></tr></thead>
+   <tbody>
+   <tr><td class="en">StegExpose</td><td>كشف إحصائي لـ <span class="en">LSB</span> في الصور غير المضغوطة</td><td>نتيجة احتمالية، وأضعف مع الرسائل الصغيرة</td></tr>
+   <tr><td class="en">zsteg</td><td>فحص أنماط الإخفاء في <span class="en">PNG / BMP</span></td><td>لا يغطي <span class="en">JPEG</span> ولا كل التقنيات</td></tr>
+   <tr><td class="en">StegSeek</td><td>كسر كلمة مرور <span class="en">Steghide</span> بالقوة الغاشمة</td><td>يستهدف <span class="en">Steghide</span> فقط، ويحتاج قائمة كلمات</td></tr>
+   <tr><td class="en">Sonic Visualiser</td><td>عرض الطيف والموجة صوتيًا</td><td>أداة عرض؛ التفسير على المحقق نفسه</td></tr>
+   </tbody>
+  </table>
+  </div>
+  <div class="card gold">
+   <div class="row" style="align-items:center">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" style="flex:0 0 auto"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+    <p style="flex:1 1 300px"><b>لا أداة تعطي حكمًا قطعيًا.</b> النتائج كلها تحتاج تفسيرًا بشريًا وتعزيزًا بأدلة أخرى قبل أي استنتاج.</p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- 10 · scenario -->
+<section class="s" data-t="70">
+ <div class="wrap">
+  <div class="ey"><span class="n">09</span> سيناريو</div>
+  <h2>سير عمل جنائي افتراضي</h2>
+  <span class="tag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> افتراضي — ليس تجربة منفّذة</span>
+  <div class="card ac" style="padding:clamp(14px,1.6vw,22px)">
+  <svg viewBox="0 0 840 70" role="img" aria-label="مسار الفحص الجنائي">
+   <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto"><path d="M0 0 8 4 0 8Z" fill="var(--ac2)"/></marker></defs>
+   <g font-family="Tajawal,sans-serif" font-size="13" text-anchor="middle">
+    <g transform="translate(720,10)"><rect width="110" height="50" rx="10" fill="rgba(90,209,255,.12)" stroke="var(--ac)"/><text x="55" y="30" fill="#fff" font-weight="700">استلام الدليل</text></g>
+    <g transform="translate(600,10)"><rect width="100" height="50" rx="10" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="50" y="30" fill="#fff">نسخة جنائية</text></g>
+    <g transform="translate(486,10)"><rect width="94" height="50" rx="10" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="47" y="30" fill="var(--gold)" font-family="monospace">SHA-256</text></g>
+    <g transform="translate(372,10)"><rect width="94" height="50" rx="10" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="47" y="30" fill="#fff">فحص الخصائص</text></g>
+    <g transform="translate(258,10)"><rect width="94" height="50" rx="10" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="47" y="30" fill="#fff">أدوات التحليل</text></g>
+    <g transform="translate(144,10)"><rect width="94" height="50" rx="10" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="47" y="30" fill="#fff">تقييم النتائج</text></g>
+    <g transform="translate(10,10)"><rect width="104" height="50" rx="10" fill="rgba(84,230,168,.12)" stroke="var(--good)"/><text x="52" y="30" fill="var(--good)" font-weight="700">توثيق</text></g>
+   </g>
+   <g stroke="var(--ac2)" stroke-width="2" marker-end="url(#ar2)" class="flow">
+    <path d="M720 35 H700"/><path d="M600 35 H580"/><path d="M486 35 H466"/><path d="M372 35 H352"/><path d="M258 35 H238"/><path d="M144 35 H114"/>
+   </g>
+  </svg>
+  </div>
+  <p style="color:var(--mut)">صورة <span class="en">PNG</span> على جهاز قيد الفحص: تُفحص من <b>النسخة فقط</b>، ويُقارَن الهاش قبل الفحص وبعده لإثبات عدم العبث.</p>
+  <div class="tbl">
+  <table>
+   <thead><tr><th>الملاحظة</th><th>التفسير المحتمل</th><th>حدود الاستنتاج</th></tr></thead>
+   <tbody>
+   <tr><td>مؤشّر إحصائي مرتفع على القناة الحمراء</td><td>تعديل <span class="en">LSB</span> — أو معالجة عادية للصورة</td><td>لا يُثبت وجود رسالة</td></tr>
+   <tr><td>بيانات بعد نهاية الملف</td><td>إلحاق بيانات — أو خلل في الملف</td><td>لا يحدّد المصدر أو النيّة</td></tr>
+   </tbody>
+  </table>
+  </div>
+ </div>
+</section>
+
+<!-- 11 · challenges + takeaways -->
+<section class="s" data-t="50">
+ <div class="wrap">
+  <div class="ey"><span class="n">10</span> الخلاصة</div>
+  <h2>التحديات والنقطتان الجوهريتان</h2>
+  <div class="g2" style="grid-template-columns:1fr 1fr;align-items:start">
+   <div class="card">
+    <b class="t">تحدّيات الكشف</b>
+    <ul class="clean">
+     <li>الضغط وإعادة الحفظ يُتلفان البتات</li>
+     <li>التشفير المسبق يجعل البيانات تبدو عشوائية</li>
+     <li>تعدّد التقنيات يصعّب تغطيتها بأداة واحدة</li>
+     <li>إيجابيات كاذبة <span class="en">(False Positives)</span></li>
+    </ul>
+   </div>
+   <div class="card gold" style="background:rgba(255,207,107,.08)">
+    <b class="t" style="color:var(--gold)">⚖ النقطتان اللتان لا تُنسيان</b>
+    <ul class="clean" style="gap:14px">
+     <li style="font-size:1.08em"><b>النمط غير الطبيعي لا يُثبت وجود رسالة.</b></li>
+     <li style="font-size:1.08em"><b>العثور على بيانات مخفية لا يُثبت ارتكاب جريمة.</b></li>
+    </ul>
+   </div>
+  </div>
+  <div class="row" style="justify-content:center;margin-top:4px">
+   <div class="stat"><span class="num">±1</span><span class="lb">أقصى تغيّر في قيمة البكسل</span></div>
+   <div class="stat"><span class="num">3</span><span class="lb">مستويات للتحليل الجنائي</span></div>
+   <div class="stat"><span class="num">0</span><span class="lb">أداة تعطي حكمًا قطعيًا</span></div>
+  </div>
+ </div>
+</section>
+
+<!-- 12 · references -->
+<section class="s" data-t="20">
+ <div class="wrap">
+  <div class="ey"><span class="n">11</span> References</div>
+  <h2>المراجع</h2>
+  <div class="g2" style="align-items:start">
+   <div class="card">
+    <b class="t">أبحاث وكتب</b>
+    <ul dir="ltr" style="font-size:clamp(13px,1.2vw,16px);text-align:left;line-height:1.6;gap:10px">
+     <li>Fridrich, J. (2009). <i>Steganography in Digital Media</i>. Cambridge Univ. Press.</li>
+     <li>Provos, N. &amp; Honeyman, P. (2003). Hide and Seek. <i>IEEE S&amp;P</i>, 1(3). doi:10.1109/MSECP.2003.1203220</li>
+     <li>Westfeld, A. &amp; Pfitzmann, A. (1999). Attacks on Steganographic Systems. <i>LNCS 1768</i>. doi:10.1007/10719724_5</li>
+     <li>Cheddad, A. et al. (2010). Digital image steganography. <i>Signal Processing</i>, 90(3). doi:10.1016/j.sigpro.2009.08.010</li>
+    </ul>
+   </div>
+   <div class="card">
+    <b class="t">أدوات</b>
+    <ul dir="ltr" style="font-size:clamp(13px,1.2vw,16px);text-align:left;line-height:1.7;gap:8px" class="mono">
+     <li>github.com/zed-0xff/zsteg</li>
+     <li>github.com/RickdeJager/stegseek</li>
+     <li>github.com/b3dk7/StegExpose</li>
+     <li>sonicvisualiser.org</li>
+    </ul>
+   </div>
+  </div>
+  <div class="card ac" style="text-align:center">
+   <p style="font-size:clamp(15px,1.5vw,20px)"><b>شكرًا لإصغائكم — ونرحّب بأسئلتكم.</b></p>
+   <p style="font-size:13px;color:var(--dim);margin-top:8px">كل الرسوم في هذا العرض مُنشأة داخل الصفحة لأغراض الشرح، وليست صورًا أصلية أو أدلة. يُنصح بالتحقق من الروابط وأرقام DOI قبل التسليم.</p>
+  </div>
+ </div>
+</section>
+
+</div>
 
 <div id="notes"></div>
 <div id="bar">
- <button id="pv" aria-label="السابق">→ السابق</button>
- <button id="nx" aria-label="التالي">التالي ←</button>
- <div class="sp"><span id="ct"></span></div>
- <button id="nb">ملاحظات</button>
- <button id="tb"><span id="tm">⏱</span></button>
+ <button id="pv">→ السابق</button>
+ <div class="mid">
+  <span id="ct"></span>
+  <div id="dots"></div>
+ </div>
+ <button id="nb">📝 ملاحظات</button>
+ <button id="tb"><span id="tm">⏱ المؤقّت</span></button>
+ <button id="nx" class="act">التالي ←</button>
 </div>
 
 <script>
-const T=[30,40,50,50,60,40,55,55,50,70,50,20];
 const N=[
-"[العضو 1] نرحّب بكم، وموضوعنا إخفاء المعلومات داخل الصور والصوت وكيف يكشفها المحقق الرقمي. (30 ث)",
-"نعرّف Steganography بأنه إخفاء وجود الرسالة. له استخدامات مشروعة كالعلامات المائية، وقد يُساء استخدامه، ودورنا كمحققين الكشف دون افتراض النية. (40 ث)",
-"التشفير يُخفي المعنى، والإخفاء يُخفي الوجود. مثال: رسالة مشفرة تبدو رموزًا غريبة فتلفت النظر، أما الصورة المعدّلة فتبدو عادية. ويمكن الجمع بينهما. (50 ث)",
-"ندخل الرسالة السرية مع الملف الحامل إلى عملية التضمين فنحصل على Stego File، ثم يستخرجها المستلم، وقد يستخدم مفتاحًا. (50 ث)",
-"[العضو 2] في LSB نغيّر آخر بت فقط. البكسل 150 يساوي 10010110؛ إن أردنا إخفاء 1 صار 151. جرّبوا الزرين لترون الفرق. (60 ث)",
-"الفرق ±1 لا تراه العين، لكن توزيع القيم يتغير إحصائيًا. المثال هنا توضيحي ولا يُعد دليلًا جنائيًا. (40 ث)",
-"في الصوت نخبئ البتات في العينات أو في الطيف الترددي. لا نقول إن الكشف صعب أو مستحيل؛ يعتمد على التقنية وحجم الرسالة. (55 ث)",
-"Steganalysis له ثلاث مراحل مختلفة: اكتشاف، واستخراج، وإثبات المصدر. والأخير هو الأصعب ويحتاج أدلة أخرى. وMetadata مؤشر مساعد فقط. (55 ث)",
-"[العضو 3] لكل أداة وظيفة وحدود؛ StegSeek مثلًا يخمّن كلمة مرور Steghide ولا يكشف الإخفاء عمومًا. النتائج تفسَّر ولا تُعد حكمًا قطعيًا. (50 ث)",
-"سيناريو افتراضي: نحفظ نسخة جنائية، نحسب SHA-256، نفحص الأدوات على النسخة، ثم نوثق. وانظروا الجدول: كل ملاحظة لها تفسير محتمل وحدّ للاستنتاج. (70 ث)",
-"الضغط والتشفير وتعدد التقنيات والإيجابيات الكاذبة تحدّ من الكشف. ونؤكد: النمط الشاذ لا يثبت رسالة، والعثور على بيانات لا يثبت جريمة. (50 ث)",
-"هذه مراجعنا، ونشكركم ونرحب بأسئلتكم. (20 ث)"];
-const S=[...document.querySelectorAll('.s')];let i=0,sec=0,tmr=null;
+ ["[العضو 1]","نرحّب بكم. موضوعنا اليوم إخفاء المعلومات داخل الصور والصوت، وكيف يتعامل معه المحقق الرقمي. سنمرّ على الفكرة، آلية العمل، ثم الكشف وحدوده."],
+ ["المقدمة","Steganography يعني إخفاء وجود الرسالة لا معناها. له استخدام مشروع كالعلامات المائية، وقد يُساء استخدامه في التهريب. دورنا كمحققين هو الكشف دون أن نفترض النية مسبقًا."],
+ ["المفاهيم","التشفير يُخفي المعنى فيلفت الانتباه، والإخفاء يُخفي الوجود فيبدو عاديًا، والكشف يقدّر احتمالًا لا حكمًا. والأقوى أن يُجمع بين التشفير والإخفاء معًا."],
+ ["آلية العمل","ندخل الرسالة السرية مع الملف الحامل إلى عملية التضمين، فينتج Stego File يبدو طبيعيًا، ثم يستخرجه الطرف الآخر — وقد يُستخدم مفتاح اختياري."],
+ ["LSB","في LSB نغيّر آخر بت فقط. البكسل 150 يساوي 10010110؛ ولإخفاء 1 يصبح 151. جرّبوا الزرّين لترون أن الخانة الأخيرة وحدها تتغيّر."],
+ ["الأثر البصري","الفرق ±1 لا تراه العين، لكن توزيع القيم يتغيّر إحصائيًا وتتقارب الأزواج المتجاورة. المثال هنا توضيحي ولا يُعدّ دليلًا."],
+ ["الصوت","في الصوت نخبّئ البتات في العيّنات أو في الطيف الترددي أو بالصدى. لا نقول إن الكشف صعب أو مستحيل؛ فهو يعتمد على التقنية وحجم الرسالة."],
+ ["الكشف","Steganalysis ثلاث مراحل: اكتشاف، فاستخراج، فإثبات المصدر — والأخير أصعبها. وبيانات الـMetadata مؤشّر مساعد فقط لا دليل حاسم."],
+ ["الأدوات","لكل أداة وظيفة وحدود؛ StegSeek مثلًا يكسر كلمة مرور Steghide ولا يكشف الإخفاء عمومًا. النتائج تُفسَّر ولا تُعدّ حكمًا قطعيًا."],
+ ["السيناريو","نحفظ نسخة جنائية، نحسب SHA-256، نفحص النسخة بالأدوات، ثم نوثّق. وكما في الجدول: لكل ملاحظة تفسير محتمل وحدّ واضح للاستنتاج."],
+ ["الخلاصة","الضغط والتشفير وتعدّد التقنيات والإيجابيات الكاذبة كلها تحدّيات. ونؤكّد نقطتين: النمط الشاذ لا يُثبت رسالة، والعثور على بيانات لا يُثبت جريمة."],
+ ["الختام","هذه مراجعنا. شكرًا لإصغائكم، ونرحّب بأسئلتكم."]
+];
+const S=[...document.querySelectorAll('.s')];
+const T=S.map(s=>+s.dataset.t||40);
+let i=0,sec=0,tmr=null;
 const $=id=>document.getElementById(id);
-function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach((s,k)=>s.classList.toggle('on',k===i));
- $('ct').textContent=(i+1)+' / '+S.length;$('prog').style.width=((i+1)/S.length*100)+'%';$('notes').textContent=N[i]; sec=0;tick();}
-function tick(){ $('tm').textContent=tmr?(Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0')+' / '+T[i]+'s'):'⏱'}
+const dots=$('dots');
+S.forEach((_,k)=>{const d=document.createElement('i');d.onclick=()=>go(k);dots.appendChild(d)});
+
+function go(n){
+ i=Math.max(0,Math.min(S.length-1,n));
+ S.forEach((s,k)=>s.classList.toggle('on',k===i));
+ [...dots.children].forEach((d,k)=>d.classList.toggle('on',k===i));
+ $('ct').textContent=(i+1)+' / '+S.length;
+ $('prog').style.width=((i+1)/S.length*100)+'%';
+ const nt=$('notes');nt.innerHTML='<span class="nt">'+N[i][0]+' · '+T[i]+' ث</span>'+N[i][1];
+ sec=0;tick();
+ if(i===4)lsb(cur);
+}
+function tick(){$('tm').innerHTML=tmr?('⏱ '+Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0')+' / '+T[i]+'ث'):'⏱ المؤقّت'}
 $('nx').onclick=()=>go(i+1);$('pv').onclick=()=>go(i-1);
-$('nb').onclick=()=>{const n=$('notes');n.style.display=n.style.display==='block'?'none':'block'};
+$('nb').onclick=()=>$('notes').classList.toggle('on');
 $('tb').onclick=()=>{if(tmr){clearInterval(tmr);tmr=null}else{sec=0;tmr=setInterval(()=>{sec++;tick()},1000)}tick()};
-addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key===' ')go(i+1);if(e.key==='ArrowRight')go(i-1)});
-let x0=null;addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
-addEventListener('touchend',e=>{if(x0===null)return;const d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>60)go(i+(d<0?1:-1));x0=null});
-// title bits
-let g='';for(let r=0;r<3;r++)for(let c=0;c<30;c++)g+=`<text x="${c*20}" y="${18+r*22}" opacity="${.3+Math.random()*.7}">${Math.random()<.5?0:1}</text>`;$('bits').innerHTML=g;
-// LSB demo
-function lsb(b){const v=150,nv=(v&254)|b,f=n=>[...n.toString(2).padStart(8,'0')].map((c,k)=>`<span class="bit${k===7?' ch':''}">${c}</span>`).join('');
- $('bf').innerHTML=f(v);$('af').innerHTML=f(nv);$('nv').textContent=nv;$('b0').className=b?'':'act';$('b1').className=b?'act':''}
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowLeft'||e.key===' '){e.preventDefault();go(i+1)}
+ if(e.key==='ArrowRight')go(i-1)
+ if(e.key==='n'||e.key==='N')$('notes').classList.toggle('on')
+});
+let x0=null;
+addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
+addEventListener('touchend',e=>{if(x0===null)return;const d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>55)go(i+(d<0?1:-1));x0=null});
+
+/* LSB demo */
+let cur=0;
+function fmt(n){return [...n.toString(2).padStart(8,'0')].map((c,k)=>`<span class="bit${k===7?' ch':''}">${c}</span>`).join('')}
+function lsb(b){cur=b;const v=150,nv=(v&254)|b;
+ $('bf').innerHTML=fmt(v);$('af').innerHTML=fmt(nv);$('nv').textContent=nv;
+ $('b0').className=b?'':'act';$('b1').className=b?'act':''}
 $('b0').onclick=()=>lsb(0);$('b1').onclick=()=>lsb(1);lsb(0);
-// compare images
-function draw(cv,st){const c=cv.getContext('2d'),d=c.createImageData(260,130);for(let y=0;y<130;y++)for(let x=0;x<260;x++){const k=(y*260+x)*4,r=60+x*.5,gg=110+y*.6,b=170-x*.2+Math.sin(x/12)*20;
- let v=[r,gg,b];if(st)v=v.map(a=>((a|0)&254)|((x*7+y*3)%2));d.data.set([...v,255],k)}c.putImageData(d,0,0)}
-draw($('c1'),0);draw($('cl'),1);
-$('sl').oninput=e=>$('cl').style.clipPath=`inset(0 ${100-e.target.value}% 0 0)`;
-let h='';const base=[...Array(16)].map((_,k)=>20+Math.abs(Math.sin(k/3))*70+(k%2?8:-8));
-base.forEach((v,k)=>{const p=(base[k&~1]+base[k|1])/2;h+=`<rect x="${6+k*19}" y="${120-v}" width="7" height="${v}" fill="#cfdcf0"/><rect x="${13+k*19}" y="${120-p}" width="7" height="${p}" fill="#8fe3ff"/>`});
-$('hist').innerHTML=h+'<text x="6" y="12" font-size="11" fill="#cfdcf0">أصلية</text><text x="60" y="12" font-size="11" fill="#8fe3ff">بعد الإخفاء</text>';
-// audio
-(function(){const w=$('wv').getContext('2d');w.strokeStyle='#8fe3ff';w.beginPath();for(let x=0;x<360;x++){const y=35+Math.sin(x/9)*18*Math.sin(x/70+1)+Math.sin(x/3)*4;x?w.lineTo(x,y):w.moveTo(x,y)}w.stroke();
- const s=$('sp').getContext('2d');for(let x=0;x<360;x+=4)for(let y=0;y<70;y+=4){const a=Math.max(0,.9-y/70-Math.random()*.3+(Math.sin(x/40)*.2));s.fillStyle=`rgba(143,227,255,${a})`;s.fillRect(x,70-y,4,4)}})();
-(function(){const c=$('bgc'),x=c.getContext('2d');let W,H,P=[];function rs(){W=c.width=innerWidth;H=c.height=innerHeight;P=[...Array(Math.min(70,W/14|0))].map(()=>({x:Math.random()*W,y:Math.random()*H,v:.3+Math.random()*.9,b:Math.random()<.5?0:1,s:11+Math.random()*10}))}rs();addEventListener('resize',rs);
-(function L(){x.clearRect(0,0,W,H);x.fillStyle='#bfeaff';P.forEach(p=>{x.font=p.s+'px monospace';x.globalAlpha=.25+p.s/40;x.fillText(p.b,p.x,p.y);p.y-=p.v;if(p.y<-10){p.y=H+10;p.x=Math.random()*W;p.b=Math.random()<.5?0:1}});requestAnimationFrame(L)})()})();
-(function(){let g='';for(let r=0;r<5;r++)for(let k=0;k<20;k++){const hit=(r*20+k)%37===5;g+=`<rect x="${k*12}" y="${r*14}" width="10" height="10" rx="2" fill="${hit?'#ffd98a':'rgba(255,255,255,.28)'}"${hit?' class="pulse"':''}/>`}$('px').innerHTML=g})();
+
+/* pixel grid */
+(function(){let g='';for(let r=0;r<5;r++)for(let k=0;k<13;k++){const hit=(r*13+k)%17===4;
+ g+=`<rect x="${6+k*19}" y="${6+r*27}" width="16" height="16" rx="3" fill="${hit?'var(--gold)':'rgba(200,220,255,.2)'}"${hit?' class="pulse"':''}/>`}
+ $('px').innerHTML=g})();
+
+/* compare canvases */
+function scene(c,st){const g=c.getContext('2d'),w=c.width,h=c.height,d=g.createImageData(w,h);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=(y*w+x)*4;
+  let r=50+x*.45+Math.sin(y/22)*18, gg=90+y*.55+Math.cos(x/30)*14, b=160-x*.25+Math.sin((x+y)/26)*22;
+  // a soft "sunset over hills" so it reads as a real photo
+  const hill=h-40-Math.sin(x/40)*20; if(y>hill){r=30+ (y-hill); gg=48; b=70}
+  let v=[r,gg,b];
+  if(st)v=v.map(a=>((a&254)|((x*7+y*13+((x>>2)&1))&1)));
+  d.data[k]=v[0];d.data[k+1]=v[1];d.data[k+2]=v[2];d.data[k+3]=255}
+ g.putImageData(d,0,0)}
+scene($('c1'),0);scene($('cl'),1);
+$('sl').oninput=e=>{const v=+e.target.value;$('cl').style.clipPath=`inset(0 ${100-v}% 0 0)`;$('hd').style.insetInlineStart=v+'%'};
+$('sl').dispatchEvent(new Event('input'));
+
+/* histogram */
+(function(){let h='';const base=[...Array(15)].map((_,k)=>22+Math.abs(Math.sin(k/2.6))*78+(k%2?10:-10));
+ base.forEach((v,k)=>{const p=(base[k&~1]+base[k|1])/2;
+  h+=`<rect x="${10+k*21}" y="${130-v}" width="8" height="${v}" rx="2" fill="var(--mut)"/>`;
+  h+=`<rect x="${19+k*21}" y="${130-p}" width="8" height="${p}" rx="2" fill="var(--ac)"/>`});
+ h+='<rect x="10" y="6" width="11" height="11" rx="2" fill="var(--mut)"/><text x="26" y="15" font-size="12" fill="var(--mut)" font-family="Tajawal,sans-serif">أصلية</text>';
+ h+='<rect x="80" y="6" width="11" height="11" rx="2" fill="var(--ac)"/><text x="96" y="15" font-size="12" fill="var(--ac)" font-family="Tajawal,sans-serif">بعد الإخفاء</text>';
+ $('hist').innerHTML=h})();
+
+/* audio wave + spectrogram */
+(function(){
+ const w=$('wv').getContext('2d');w.clearRect(0,0,420,80);w.lineWidth=2;
+ const grd=w.createLinearGradient(0,0,420,0);grd.addColorStop(0,'#5ad1ff');grd.addColorStop(1,'#8f7bff');
+ w.strokeStyle=grd;w.beginPath();
+ for(let x=0;x<420;x++){const y=40+Math.sin(x/10)*20*Math.sin(x/80+1)+Math.sin(x/3)*5;x?w.lineTo(x,y):w.moveTo(x,y)}w.stroke();
+ const s=$('sp').getContext('2d');
+ for(let x=0;x<420;x+=4)for(let y=0;y<90;y+=4){
+  const a=Math.max(0,.85-y/90-Math.random()*.25+Math.sin(x/38)*.18);
+  s.fillStyle=`rgba(${90+y*1.3},${209-y},255,${a})`;s.fillRect(x,90-y,4,4)}
+})();
+
+/* ambient falling bits */
+(function(){const c=$('bgc'),x=c.getContext('2d');let W,H,P=[];
+ function rs(){W=c.width=innerWidth;H=c.height=innerHeight;
+  P=[...Array(Math.min(80,W/13|0))].map(()=>({x:Math.random()*W,y:Math.random()*H,v:.25+Math.random()*.85,b:Math.random()<.5?0:1,s:11+Math.random()*12}))}
+ rs();addEventListener('resize',rs);
+ (function L(){x.clearRect(0,0,W,H);
+  P.forEach(p=>{x.font=p.s+'px monospace';x.globalAlpha=.18+p.s/55;x.fillStyle=p.b?'#7fd6ff':'#9b8cff';
+   x.fillText(p.b,p.x,p.y);p.y-=p.v;if(p.y<-12){p.y=H+12;p.x=Math.random()*W;p.b=Math.random()<.5?0:1}});
+  requestAnimationFrame(L)})()})();
+
 go(0);
 </script>
-</body>
-</html>
+
+</body></html>
